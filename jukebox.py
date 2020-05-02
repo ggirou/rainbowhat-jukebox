@@ -1,20 +1,76 @@
 #!/usr/bin/env python3
 
-import colorsys
-import rainbowhat as rh
-from rainbowhat import display, lights, weather, rainbow, buzzer, touch
-import time
-import signal
-from subprocess import Popen, PIPE
-import asyncio
-import glob
-import threading
-import re
 import os
+import signal
+import threading
+import time
+import glob
+import colorsys
+from rainbowhat import display, lights, weather, rainbow, buzzer, touch, rainbow
+from subprocess import Popen, PIPE
+
+
+class Display:
+  def __init__(self):
+    self.__visibleEvent = threading.Event()
+    self.__visibleEvent.set()
+    self.__stopEvent = threading.Event()
+    self.__rainbowThread = threading.Thread(target=self.__rainbow)
+    self.__rainbowThread.start()
+    self.__clearTimer = threading.Timer(5.0, self.clear)
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    self.clear()
+    self.__stopEvent.set()
+    self.__visibleEvent.set()
+
+  def show(self, currentAlbum=1, currentTrack=1, playing=True):
+    if playing:
+      value = '%02d%02d' % (min(currentAlbum + 1, 99), min(currentTrack + 1, 99))
+    else:
+      value = ' || '
+    display.clear()
+    display.print_str(value)
+    display.set_decimal(1, playing)
+    display.show()
+
+    self.__visibleEvent.set()
+
+    self.__clearTimer.cancel()
+    self.__clearTimer = threading.Timer(5.0, self.clear)
+    self.__clearTimer.start()
+
+  def clear(self):
+    self.__visibleEvent.clear()
+    self.__clearTimer.cancel()
+    display.clear()
+    display.show()
+
+  def __rainbow(self):
+    s = 100 / 7
+    while True:
+      for i in range(101):
+        for pixel in range(7):
+          if not self.__visibleEvent.is_set():
+            rainbow.clear()
+            rainbow.show()
+
+          if self.__stopEvent.is_set():
+            return
+
+          self.__visibleEvent.wait()
+          h = ((i + s * pixel) % 100) / 100.0
+          # rainbow.clear()
+          r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 0.1)]
+          rainbow.set_pixel(pixel, r, g, b)
+          rainbow.show()
 
 
 class Player:
-  def __init__(self, path='music/'):
+  def __init__(self, display, path='music/'):
     self.process = Popen(["echo", "Hello World!"])
     self.playing = False
     def findDir(path): return sorted(glob.glob(path + "**/", recursive=True))
@@ -22,8 +78,9 @@ class Player:
     self.albums = [album for album in [findMp3(d) for d in findDir(path)] if len(album) > 0]
     self.currentAlbum = 0
     self.currentTrack = 0
-    self.__clearTimer = threading.Timer(5.0, self.__clear)
-    self.__display()
+    self.macAddress = None
+    self.__display = display
+    self.__show()
 
     # print(self.albums)
     # print(self.album)
@@ -32,23 +89,12 @@ class Player:
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
-    self.__clear()
     self.stop()
+    self.__display.__exit__(exc_type, exc_value, traceback)
     self.process.__exit__(exc_type, exc_value, traceback)
 
-  def __display(self):
-    value = '%02d%02d' % (min(self.__currentAlbum + 1, 99), min(self.__currentTrack + 1, 99))
-    display.clear()
-    display.print_str(value)
-    display.set_decimal(1, True)
-    display.show()
-    self.__clearTimer.cancel()
-    self.__clearTimer = threading.Timer(5.0, self.__clear)
-    self.__clearTimer.start()
-
-  def __clear(self):
-    display.clear()
-    display.show()
+  def __show(self):
+    self.__display.show(currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
 
   @property
   def currentAlbum(self):
@@ -92,36 +138,41 @@ class Player:
     self.process = Popen(args, stdout=PIPE, stderr=PIPE)
     self.playing = True
     print("Playing %s" % file)
-    self.__display()
+    self.__show()
 
-    def waitProcessTermination(self):
-      _, stderr = self.process.communicate()
-      # print("returncode %s" % self.process.returncode)
-      returncode = self.process.returncode
-      if(returncode == 0):
-        self.next()
-      elif(returncode is not None):
-        error = stderr.decode('utf-8')
-        # error = re.sub('[^\r\n\t!-~]+', ' ', stderr.decode('utf-8')).strip()
-        print("Error %s: %s" % (returncode, error))
-        if(returncode == 1):
-          print("Reconnect")
-          output = os.popen("echo info | bluetoothctl").read()
-          macAddress = output.split("Device ")[1].split(" ")[0]
-          os.popen("\{ echo disconnect; echo connect '%s'; sleep 5; \} | bluetoothctl" % macAddress)
-
-    thread = threading.Thread(target=waitProcessTermination, args=[self])
+    thread = threading.Thread(target=self.onProcessTermination)
     thread.start()
+
+  def onProcessTermination(self):
+    _, stderr = self.process.communicate()
+    returncode = self.process.returncode
+    if(returncode == 0):
+      self.next()
+    elif(returncode is not None):
+      error = stderr.decode('utf-8')
+      print("Error %s: %s" % (returncode, error))
+      if(returncode == 1):
+        print("Try to reconnect")
+        if self.macAddress is None:
+          output = os.popen("echo info | bluetoothctl").read()
+          self.macAddress = output.split("Device ")[1].split(" ")[0]
+        print("Reconnect to %s" % self.macAddress)
+        cmd = "{ echo disconnect; sleep 2; echo connect '%s'; sleep 2; echo connect '%s'; sleep 2; } | bluetoothctl" % (
+            self.macAddress, self.macAddress)
+        output = os.popen(cmd).read()
+        print(output)
 
   def pause(self):
     print("Pause")
-    self.process.send_signal(signal.SIGSTOP)
     self.playing = False
+    self.__show()
+    self.process.send_signal(signal.SIGSTOP)
 
   def resume(self):
     print("Resume")
-    self.process.send_signal(signal.SIGCONT)
     self.playing = True
+    self.__show()
+    self.process.send_signal(signal.SIGCONT)
 
   def togglePauseResume(self):
     # print("%s" % self.process.poll())
@@ -200,254 +251,12 @@ class Buttons:
       self.player.next()
 
 
-with Player() as player:
-  Buttons(player)
-  signal.pause()
-
-
-# import os
-# os.spawnl(os.P_DETACH, 'some_long_running_command')
-
-# from touch import Buttons as touch
-
-# value = 0
-# process = None
-# print("A %s B %s C %s" % (touch.A.pressed, touch.B.pressed, touch.C.pressed))
-# import RPi.GPIO as GPIO
-
-# def my_callback_one(channel):
-#     print('Callback one %s' % channel)
-
-# channel=21
-# GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-# GPIO.add_event_detect(channel, GPIO.BOTH)
-# GPIO.add_event_callback(channel, my_callback_one)
-
-# channel=20
-# GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-# GPIO.add_event_detect(channel, GPIO.BOTH)
-# GPIO.add_event_callback(channel, my_callback_one)
-
-# print("A %s\nB %s\nC %s" % (touch.A.__dict__, touch.B.__dict__, touch.C.__dict__))
-
-
-# def runProcess(args):
-#   global process
-#   if process != None:
-#     # print("Killing " + str(process.pid))
-#     process.kill()
-#   print("Running " + str(args))
-#   process = Popen(args, stdout=PIPE, stderr=PIPE)
-#   # stdout, stderr = process.communicate()
-#   # returncode = process.returncode
-#   # if returncode != 0:
-#   #     return "Error: " + stderr.decode('utf-8')
-#   # return stdout.decode('utf-8')
-
-# async def pressAsync(button):
-#   # print("A %s\nB %s\nC %s" % (touch.A.__dict__, touch.B.__dict__, touch.C.__dict__))
-#   print("A %s B %s C %s" % (touch.A.pressed, touch.B.pressed, touch.C.pressed))
-
-# def press(button):
-#     print("press %s" % button)
-#     lights.rgb(int(button == 0), int(button == 1), int(button == 2))
-#     asyncio.run(pressAsync(button))
-#     print("Over")
-#     # print("A %s\nB %s\nC %s" % (touch.A.__dict__, touch.B.__dict__, touch.C.__dict__))
-#     # print("lights %s %s %s" % (int(button == 0), int(button == 1), int(button == 2)))
-#     # print("info %s %s %s" % (touch.A, touch.A.noindex, touch.A.members))
-
-# def release(button):
-#     print("release %s" % button)
-#     file = '/usr/share/sounds/alsa/Front_Center.wav'
-#     # file = "music/1 - La Reine des Neiges 2/CD1/01 - La berceuse d'Ahtohallan.flac"
-#     runProcess(['aplay', '-D', 'bluealsa', '-N', file])
-#     lights.rgb(0, 0, 0)
-
-# async def main():
-#     print('hello')
-#     touch.A.press(press)
-#     touch.B.press(press)
-#     touch.C.press(press)
-#     touch.A.release(release)
-#     touch.B.release(release)
-#     touch.C.release(release)
-#     await asyncio.sleep(1)
-#     print('world')
-
-# asyncio.run(main())
-
-# while True:
-#     t = weather.temperature()
-#     p = weather.pressure()
-#     print(t, p)
-#     time.sleep(0.5)
-
-
-# Pause the main thread so it doesn't exit
-# signal.pause()
-
-# exit()
-
-# #######################
-
-# rainbow.set_pixel(0, 255, 0, 0)
-# rainbow.show()
-
-# #######################
-
-
-# while True:
-#     for pixel in range(7):
-#         rainbow.clear()
-#         rainbow.set_pixel(pixel, 255, 0, 0)
-#         rainbow.show()
-#         time.sleep(0.1)
-
-# #######################
-
-
-# rainbow.clear()
-# rainbow.show()
-
-# while True:
-#     for i in range(101):
-#         h = i / 100.0
-#         r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
-#         rainbow.set_all(r, g, b)
-#         rainbow.show()
-#         time.sleep(0.02)
-
-
-# #######################
-
-
-# s = 100 / 7
-# while True:
-#     for i in range(101):
-#         for pixel in range(7):
-#             h = ((i + s * pixel) % 100) / 100.0
-#             # rainbow.clear()
-#             r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 0.1)]
-#             rainbow.set_pixel(pixel, r, g, b)
-#             rainbow.show()
-
-# #######################
-
-
-# display.print_str('AHOY')
-# display.show()
-
-# #######################
-
-
-# i = 0.0
-
-# while i < 999.9:
-#     display.clear()
-#     display.print_float(i)
-#     display.show()
-#     i += 0.01
-
-# #######################
-
-
-# display.clear()
-# display.set_decimal(0, True)
-# display.show()
-
-
-# #######################
-
-
-# @touch.A.press()
-# def touch_a(channel):
-#     print('Button A pressed')
-#     lights.rgb(1, 0, 0)
-
-
-# @touch.A.release()
-# def release_a(channel):
-#     print('Button A released')
-#     lights.rgb(0, 0, 0)
-
-
-# #######################
-
-
-# value = 0
-
-
-# def show_value(plus):
-#     global value
-#     value = value + plus
-#     display.clear()
-#     display.print_float(value)
-#     display.show()
-
-
-# @touch.A.press()
-# def touch_a(channel):
-#     lights.rgb(1, 0, 0)
-#     show_value(-1)
-
-
-# @touch.A.release()
-# def release_a(channel):
-#     lights.rgb(0, 0, 0)
-
-
-# @touch.B.press()
-# def touch_b(channel):
-#     lights.rgb(0, 1, 0)
-#     show_value(+1)
-
-
-# @touch.B.release()
-# def release_b(channel):
-#     lights.rgb(0, 0, 0)
-
-
-# #######################
-
-
-# while True:
-#     t = weather.temperature()
-#     p = weather.pressure()
-#     print(t, p)
-#     time.sleep(0.5)
-
-# #######################
-
-
-# while True:
-#     t = weather.temperature()
-#     display.clear()
-#     display.print_float(t)
-#     display.show()
-#     time.sleep(0.5)
-
-# #######################
-
-
-# buzzer.note(261, 1)
-
-# buzzer.midi_note(60, 1)
-
-# song = [68, 68, 68, 69, 70, 70, 69, 70, 71, 72]
-
-# for note in song:
-#     buzzer.midi_note(note, 0.5)
-#     time.sleep(1)
-
-
-# #######################
-
-
-# while True:
-#     if int(time.time()) % 2 == 0:
-#         display.print_float(float(time.strftime('%H.%M')))
-#     else:
-#         display.print_str(time.strftime('%H%M'))
-#     display.show()
-#     time.sleep(1)
+def main():
+  with Display() as display:
+    with Player(display) as player:
+      Buttons(player)
+      signal.pause()
+
+
+if __name__ == "__main__":
+  main()
