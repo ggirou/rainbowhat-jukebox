@@ -10,6 +10,7 @@ import asyncio
 import glob
 import threading
 import re
+import os
 
 
 class Player:
@@ -96,12 +97,18 @@ class Player:
     def waitProcessTermination(self):
       _, stderr = self.process.communicate()
       # print("returncode %s" % self.process.returncode)
-      if(self.process.returncode == 0):
+      returncode = self.process.returncode
+      if(returncode == 0):
         self.next()
-      elif(self.process.returncode is not None):
+      elif(returncode is not None):
         error = stderr.decode('utf-8')
         # error = re.sub('[^\r\n\t!-~]+', ' ', stderr.decode('utf-8')).strip()
-        print("Error %s: %s" % (self.process.returncode, error))
+        print("Error %s: %s" % (returncode, error))
+        if(returncode == 1):
+          print("Reconnect")
+          output = os.popen("echo info | bluetoothctl").read()
+          macAddress = output.split("Device ")[1].split(" ")[0]
+          os.popen("\{ echo disconnect; echo connect '%s'; sleep 5; \} | bluetoothctl" % macAddress)
 
     thread = threading.Thread(target=waitProcessTermination, args=[self])
     thread.start()
