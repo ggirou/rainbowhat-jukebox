@@ -1,7 +1,33 @@
 Music player with Rainbow Hat
 -----------------------------
 
-# Configure bluetooth speaker
+# Installation
+
+    sudo apt-get install bluealsa mpg321
+
+    # Rainbowhat https://github.com/pimoroni/rainbow-hat
+    curl https://get.pimoroni.com/rainbowhat | bash
+
+## Configure bluetooth speaker
+
+    ./pair-bluetooth-speaker.sh 78:44:05:96:3D:EE
+    ./pair-bluetooth-speaker.sh FC:58:FA:A8:72:96
+
+    # Test
+    aplay -D bluealsa /usr/share/sounds/alsa/Front_Center.wav
+
+## Configure Autologin
+
+    sudo raspi-config
+    # 3 Boot Options > B1 Desktop / CLI > B2 Console Autologin
+
+    echo 'pushd jukebox; ./jukebox.py; popd' >> ~/.bashrc
+
+## Run
+
+    ./jukebox.py
+
+# Troubleshooting
 
 ## Check and pair bluetooth device
 
@@ -11,31 +37,39 @@ Music player with Rainbow Hat
     # Scan for Bluetooth devices
     hcitool scan
 
-    sudo ./pair-bluetooth-speaker.sh 78:44:05:96:3D:EE
-
-### For any problem
-
     sudo hciconfig hci0 up
     sudo hciconfig hci0 reset
+
+    bluetoothctl
+    # agent on
+    # default-agent
+    # scan on
+    # trust $MAC_ADDRESS
+    # pair $MAC_ADDRESS
+    # connect $MAC_ADDRESS 
+
+### For any problem
 
     sudo apt-get install pi-bluetooth
     sudo dpkg-reconfigure pi-bluetooth
 
     # pkill hci
-    # sudo service hciuart restart
+    # sudo systemctl enable bluetooth
     # sudo systemctl enable hciuart
-    sudo systemctl stop bluetooth
-    sudo systemctl stop hciuart
-    sudo systemctl start hciuart
-    sudo systemctl start bluetooth
+    sudo systemctl restart hciuart
+    sudo systemctl restart bluetooth
 
-    pkill pulseaudio
+    sudo systemctl stop bluetooth
+    sudo bluetoothd -d -n
+
+    sudo killall pulseaudio
+    sudo killall bluealsa
 
 ## Install bluealsa
 
 Install:
 
-    sudo apt-get install -y bluealsa mpg123
+    sudo apt-get install -y bluealsa
     sudo service bluealsa start
 
 Configure:
@@ -49,7 +83,6 @@ Configure:
 Test:
 
     aplay -D bluealsa /usr/share/sounds/alsa/Front_Center.wav
-    mpg123 -a bluealsa test.mp3
 
 ## With Pulse (Not working)
 
@@ -74,13 +107,11 @@ Start pulseaudio:
 
     pulseaudio --start
 
-# Autologin
+## Rainbow Hat
 
-    sudo raspi-config
-    # 3 Boot Options > B1 Desktop / CLI > B2 Console Autologin
+https://github.com/pimoroni/rainbow-hat
 
-TODO .bashrc
+## PyBluez
 
-# Rainbowhat
-
-https://sourceforge.net/p/raspberry-gpio-python/wiki/Inputs/
+    sudo apt-get install python-dev libbluetooth-dev
+    pip3 install PyBluez

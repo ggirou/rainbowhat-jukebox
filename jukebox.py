@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 import asyncio
 import glob
 import threading
-
+import re
 
 class Player:
   def __init__(self, path='music/'):
@@ -75,7 +75,9 @@ class Player:
 
     self.stop()
 
-    args = ['mpg123', '-a', 'bluealsa', file]
+    # args = ['mpg123', '-a', 'bluealsa', file]
+    args = ['mpg321', '--quiet', '-a', 'bluealsa', file]
+
     # args = ['sleep', '30000']
     self.process = Popen(args, stdout=PIPE, stderr=PIPE)
     self.playing = True
@@ -88,7 +90,9 @@ class Player:
       if(self.process.returncode == 0):
         self.next()
       elif(self.process.returncode is not None):
-        print("Error %s: %s" % (self.process.returncode, stderr.decode('utf-8')))
+        error = stderr.decode('utf-8')
+        # error = re.sub('[^\r\n\t!-~]+', ' ', stderr.decode('utf-8')).strip()
+        print("Error %s: %s" % (self.process.returncode, error))
 
     thread = threading.Thread(target=waitProcessTermination, args=[self])
     thread.start()
@@ -104,7 +108,7 @@ class Player:
     self.playing = True
 
   def togglePauseResume(self):
-    print("%s" % self.process.poll())
+    # print("%s" % self.process.poll())
     if self.process.poll() is not None:
       self.play()
     elif self.playing:

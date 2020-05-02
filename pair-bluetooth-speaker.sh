@@ -7,18 +7,33 @@ MAC_ADDRESS_=`echo $MAC_ADDRESS | tr ':' '_'`
 # a2dp_sink, headset_head_unit, off
 PROFIL=a2dp_sink
 
-bluetoothctl <<-EOF
-agent on
-default-agent
-disconnect
-trust $MAC_ADDRESS
-pair $MAC_ADDRESS
-connect $MAC_ADDRESS
-EOF
+{
+echo help
+echo agent on
+echo default-agent
+echo scan on
+echo disconnect
+sleep 20
+echo trust $MAC_ADDRESS
+sleep 2
+echo pair $MAC_ADDRESS
+sleep 2
+echo connect $MAC_ADDRESS
+sleep 10
+} | bluetoothctl
 
+# defaults.bluealsa.service "org.bluealsa"
 cat > ~/.asoundrc <<-EOF
 defaults.bluealsa.interface "hci0"
 defaults.bluealsa.device "$MAC_ADDRESS"
 defaults.bluealsa.profile "a2dp"
 defaults.bluealsa.delay 10000 
 EOF
+
+# Pulse
+# pacmd list-cards
+
+# pacmd set-card-profile bluez_card.$MAC_ADDRESS_ $PROFIL
+
+# pacmd set-default-sink bluez_sink.$MAC_ADDRESS_.$PROFIL
+# pacmd set-default-source bluez_source.$MAC_ADDRESS_.$PROFIL
