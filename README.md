@@ -3,10 +3,12 @@ Music player with Rainbow Hat
 
 # Installation
 
-    sudo apt-get install bluealsa mpg321
+    sudo apt-get install bluealsa mpg321 python3-rainbowhat
+    pip3 install -r requirements.txt
 
     # Rainbowhat https://github.com/pimoroni/rainbow-hat
-    curl https://get.pimoroni.com/rainbowhat | bash
+    # To test without
+    # curl https://get.pimoroni.com/rainbowhat | bash
 
 ## Configure bluetooth speaker
 
@@ -21,7 +23,7 @@ Music player with Rainbow Hat
     sudo raspi-config
     # 3 Boot Options > B1 Desktop / CLI > B2 Console Autologin
 
-    echo 'pushd jukebox; ./jukebox.py; popd' >> ~/.bashrc
+    echo 'pushd jukebox; ./pair-bluetooth-speaker.sh FC:58:FA:A8:72:96; ./jukebox.py > jukebox.log; popd' >> ~/.bashrc
 
 ## Run
 

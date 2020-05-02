@@ -8,7 +8,7 @@ import glob
 import colorsys
 from rainbowhat import display, lights, weather, rainbow, buzzer, touch, rainbow
 from subprocess import Popen, PIPE
-
+from tendo import singleton
 
 class Display:
   def __init__(self):
@@ -254,10 +254,14 @@ class Buttons:
           self.player.show()
         elif cmd == "RSET":
           print("Reboot")
-          Popen(["reboot", "now"])
+          self.display.clear()
+          Popen(["shutdown", "-r", "now"])
+          exit()
         elif cmd == "HALT":
           print("Shutdown")
+          self.display.clear()
           Popen(["shutdown", "now"])
+          exit()
     elif(button == touch.A._index):
       self.player.previous()
     elif(button == touch.B._index):
@@ -267,6 +271,8 @@ class Buttons:
 
 
 def main():
+  me = singleton.SingleInstance() 
+
   with Display() as display:
     with Player(display) as player:
       Buttons(display, player)
