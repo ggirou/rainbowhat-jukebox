@@ -27,14 +27,16 @@ class Display:
     self.__stopEvent.set()
     self.__visibleEvent.set()
 
-  def show(self, currentAlbum=1, currentTrack=1, playing=True):
-    if playing:
-      value = '%02d%02d' % (min(currentAlbum + 1, 99), min(currentTrack + 1, 99))
-    else:
-      value = ' || '
+  def show(self, value=None, currentAlbum=1, currentTrack=1, playing=True):
     display.clear()
-    display.print_str(value)
-    display.set_decimal(1, playing)
+    if value is not None:
+      display.print_str(value)
+    elif playing:
+      value = '%02d%02d' % (min(currentAlbum + 1, 99), min(currentTrack + 1, 99))
+      display.print_str(value)
+      display.set_decimal(1, playing)
+    else:
+      display.print_str(' || ')
     display.show()
 
     self.__visibleEvent.set()
@@ -80,7 +82,7 @@ class Player:
     self.currentTrack = 0
     self.macAddress = None
     self.__display = display
-    self.__show()
+    self.show()
 
     # print(self.albums)
     # print(self.album)
@@ -93,7 +95,7 @@ class Player:
     self.__display.__exit__(exc_type, exc_value, traceback)
     self.process.__exit__(exc_type, exc_value, traceback)
 
-  def __show(self):
+  def show(self):
     self.__display.show(currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
 
   @property
@@ -138,12 +140,12 @@ class Player:
     self.process = Popen(args, stdout=PIPE, stderr=PIPE)
     self.playing = True
     print("Playing %s" % file)
-    self.__show()
+    self.show()
 
-    thread = threading.Thread(target=self.onProcessTermination)
+    thread = threading.Thread(target=self.onProcessExit)
     thread.start()
 
-  def onProcessTermination(self):
+  def onProcessExit(self):
     _, stderr = self.process.communicate()
     returncode = self.process.returncode
     if(returncode == 0):
@@ -165,13 +167,13 @@ class Player:
   def pause(self):
     print("Pause")
     self.playing = False
-    self.__show()
+    self.show()
     self.process.send_signal(signal.SIGSTOP)
 
   def resume(self):
     print("Resume")
     self.playing = True
-    self.__show()
+    self.show()
     self.process.send_signal(signal.SIGCONT)
 
   def togglePauseResume(self):
@@ -207,7 +209,8 @@ class Player:
 
 
 class Buttons:
-  def __init__(self, player):
+  def __init__(self, display, player):
+    self.display = display
     self.player = player
     self.holding = False
     touch.A.press(lambda button: self.press(button))
@@ -216,6 +219,8 @@ class Buttons:
     touch.A.release(lambda button: self.release(button))
     touch.B.release(lambda button: self.release(button))
     touch.C.release(lambda button: self.release(button))
+    self.commands = ["PLAY", "RSET", "HALT"]
+    self.currentCmd = 0
 
   def __startHold(self, button):
     self.holdTimer = threading.Timer(1.0, self.hold, [button])
@@ -227,8 +232,8 @@ class Buttons:
     if(button == touch.A._index):
       self.player.previousAlbum()
     elif(button == touch.B._index):
-      # self.player.togglePauseResume()
-      pass
+      self.currentCmd = (self.currentCmd + 1) % len(self.commands)
+      self.display.show(value=self.commands[self.currentCmd])
     elif(button == touch.C._index):
       self.player.nextAlbum()
     self.__startHold(button)
@@ -243,6 +248,9 @@ class Buttons:
     self.holdTimer.cancel()
     if self.holding:
       self.holding = False
+      if(button == touch.B._index):
+        if self.commands[self.currentCmd] == "PLAY":
+          self.player.show()
     elif(button == touch.A._index):
       self.player.previous()
     elif(button == touch.B._index):
@@ -254,7 +262,7 @@ class Buttons:
 def main():
   with Display() as display:
     with Player(display) as player:
-      Buttons(player)
+      Buttons(display, player)
       signal.pause()
 
 
