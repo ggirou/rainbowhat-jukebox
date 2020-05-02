@@ -11,6 +11,7 @@ import glob
 import threading
 import re
 
+
 class Player:
   def __init__(self, path='music/'):
     self.process = Popen(["echo", "Hello World!"])
@@ -20,7 +21,9 @@ class Player:
     self.albums = [album for album in [findMp3(d) for d in findDir(path)] if len(album) > 0]
     self.currentAlbum = 0
     self.currentTrack = 0
+    self.__clearTimer = threading.Timer(5.0, self.__clear)
     self.__display()
+
     # print(self.albums)
     # print(self.album)
 
@@ -28,8 +31,7 @@ class Player:
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
-    display.clear()
-    display.show()
+    self.__clear()
     self.stop()
     self.process.__exit__(exc_type, exc_value, traceback)
 
@@ -38,6 +40,13 @@ class Player:
     display.clear()
     display.print_str(value)
     display.set_decimal(1, True)
+    display.show()
+    self.__clearTimer.cancel()
+    self.__clearTimer = threading.Timer(5.0, self.__clear)
+    self.__clearTimer.start()
+
+  def __clear(self):
+    display.clear()
     display.show()
 
   @property
@@ -128,14 +137,21 @@ class Player:
 
   def previousAlbum(self):
     print("Previous album")
+    self.currentAlbum -= 1
+    self.currentTrack = 0
+    self.play()
 
   def nextAlbum(self):
     print("Next album")
+    self.currentAlbum += 1
+    self.currentTrack = 0
+    self.play()
 
 
 class Buttons:
   def __init__(self, player):
     self.player = player
+    self.holding = False
     touch.A.press(lambda button: self.press(button))
     touch.B.press(lambda button: self.press(button))
     touch.C.press(lambda button: self.press(button))
@@ -143,13 +159,33 @@ class Buttons:
     touch.B.release(lambda button: self.release(button))
     touch.C.release(lambda button: self.release(button))
 
+  def __startHold(self, button):
+    self.holdTimer = threading.Timer(1.0, self.hold, [button])
+    self.holdTimer.start()
+
+  def hold(self, button):
+    # print("Hold %s" % button)
+    self.holding = True
+    if(button == touch.A._index):
+      self.player.previousAlbum()
+    elif(button == touch.B._index):
+      # self.player.togglePauseResume()
+      pass
+    elif(button == touch.C._index):
+      self.player.nextAlbum()
+    self.__startHold(button)
+
   def press(self, button):
     lights.rgb(int(button == 0), int(button == 1), int(button == 2))
+    self.__startHold(button)
     # print("A %s B %s C %s" % (touch.A.pressed, touch.B.pressed, touch.C.pressed))
 
   def release(self, button):
     lights.rgb(0, 0, 0)
-    if(button == touch.A._index):
+    self.holdTimer.cancel()
+    if self.holding:
+      self.holding = False
+    elif(button == touch.A._index):
       self.player.previous()
     elif(button == touch.B._index):
       self.player.togglePauseResume()

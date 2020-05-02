@@ -58,6 +58,7 @@ Music player with Rainbow Hat
     # sudo systemctl enable hciuart
     sudo systemctl restart hciuart
     sudo systemctl restart bluetooth
+    sudo systemctl restart bluealsa
 
     sudo systemctl stop bluetooth
     sudo bluetoothd -d -n

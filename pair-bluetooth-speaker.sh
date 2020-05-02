@@ -12,7 +12,8 @@ echo help
 echo agent on
 echo default-agent
 echo scan on
-echo disconnect
+echo disconnect $MAC_ADDRESS
+echo connect $MAC_ADDRESS
 sleep 20
 echo trust $MAC_ADDRESS
 sleep 2
