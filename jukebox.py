@@ -249,8 +249,15 @@ class Buttons:
     if self.holding:
       self.holding = False
       if(button == touch.B._index):
-        if self.commands[self.currentCmd] == "PLAY":
+        cmd = self.commands[self.currentCmd]
+        if cmd == "PLAY":
           self.player.show()
+        elif cmd == "RSET":
+          print("Reboot")
+          Popen(["reboot", "now"])
+        elif cmd == "HALT":
+          print("Shutdown")
+          Popen(["shutdown", "now"])
     elif(button == touch.A._index):
       self.player.previous()
     elif(button == touch.B._index):
