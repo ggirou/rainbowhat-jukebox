@@ -119,6 +119,18 @@ https://github.com/pimoroni/rainbow-hat
     sudo apt-get install python-dev libbluetooth-dev
     pip3 install PyBluez
 
+## Aplay
+
+https://github.com/Arkq/bluez-alsa
+
+    aplay -D bluealsa:SRV=org.bluealsa,DEV=XX:XX:XX:XX:XX:XX,PROFILE=a2dp /usr/share/sounds/alsa/Front_Center.wav
+
+    aplay -D bluealsa:HCI=hci0,DEV=XX:XX:XX:XX:XX:XX,PROFILE=a2dp /usr/share/sounds/alsa/Front_Center.wav
+
+## Mpg321
+
+    mpg321 -a bluealsa:HCI=hci0,DEV=XX:XX:XX:XX:XX:XX,PROFILE=a2dp /usr/share/sounds/alsa/Front_Center.wav
+
 ## Python-VLC
 
     sudo apt-get install vlc python3-vlc

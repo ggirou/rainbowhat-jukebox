@@ -1,0 +1,195 @@
+pi@jukebox:~ $ bluetoothctl 
+Agent registered
+[bluetooth]# agent on
+Agent is already registered
+[bluetooth]# default-agent
+Default agent request successful
+[bluetooth]# devices
+Device 78:44:05:96:3D:EE JBL GO
+Device FC:58:FA:A8:72:96 SoundBox Color
+[bluetooth]# info
+Missing device address argument
+[bluetooth]# connect FC:58:FA:A8:72:96
+Attempting to connect to FC:58:FA:A8:72:96
+[CHG] Device FC:58:FA:A8:72:96 Connected: yes
+Failed to connect: org.bluez.Error.Failed
+[CHG] Device FC:58:FA:A8:72:96 Connected: no
+[bluetooth]# remove FC:58:FA:A8:72:96
+[DEL] Device FC:58:FA:A8:72:96 SoundBox Color
+Device has been removed
+[bluetooth]# info
+Missing device address argument
+[bluetooth]# devices
+Device 78:44:05:96:3D:EE JBL GO
+[bluetooth]# remove 78:44:05:96:3D:EE
+[DEL] Device 78:44:05:96:3D:EE JBL GO
+Device has been removed
+[bluetooth]# devices
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[bluetooth]# scan on
+Discovery started
+[CHG] Controller B8:27:EB:5B:9A:D5 Discovering: yes
+[NEW] Device 6C:8F:43:7F:F8:1B 6C-8F-43-7F-F8-1B
+[NEW] Device 4E:79:5F:BA:39:63 4E-79-5F-BA-39-63
+[NEW] Device 72:BD:F5:D1:30:E0 72-BD-F5-D1-30-E0
+[NEW] Device 41:EC:BA:84:12:D6 41-EC-BA-84-12-D6
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[NEW] Device F8:8F:CA:22:01:42 Chambre parent
+[NEW] Device 34:27:92:25:28:E8 Freebox Player Mini v2
+[bluetooth]# scan on
+Failed to start discovery: org.bluez.Error.InProgress
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[bluetooth]# scan on
+Failed to start discovery: org.bluez.Error.InProgress
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[bluetooth]# scan on
+Failed to start discovery: org.bluez.Error.InProgress
+[bluetooth]# trust FC:58:FA:A8:72:96
+Device FC:58:FA:A8:72:96 not available
+[NEW] Device FC:58:FA:A8:72:96 SoundBox Color
+[bluetooth]# trust FC:58:FA:A8:72:96
+[CHG] Device FC:58:FA:A8:72:96 Trusted: yes
+Changing FC:58:FA:A8:72:96 trust succeeded
+[bluetooth]# pair FC:58:FA:A8:72:96
+Attempting to pair with FC:58:FA:A8:72:96
+[CHG] Device FC:58:FA:A8:72:96 Connected: yes
+[SoundBox Color]# connect FC:58:FA:A8:72:96
+Attempting to connect to FC:58:FA:A8:72:96
+Failed to connect: org.bluez.Error.InProgress
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 00001101-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 00001108-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000110b-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000111e-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 ServicesResolved: yes
+[CHG] Device FC:58:FA:A8:72:96 Paired: yes
+Pairing successful
+[CHG] Device FC:58:FA:A8:72:96 ServicesResolved: no
+[CHG] Device FC:58:FA:A8:72:96 Connected: no
+[bluetooth]# pair FC:58:FA:A8:72:96
+Attempting to pair with FC:58:FA:A8:72:96
+Failed to pair: org.bluez.Error.AlreadyExists
+[bluetooth]# connect FC:58:FA:A8:72:96
+Attempting to connect to FC:58:FA:A8:72:96
+[CHG] Device FC:58:FA:A8:72:96 Connected: yes
+Connection successful
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 00001101-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 00001108-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000110b-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 UUIDs: 0000111e-0000-1000-8000-00805f9b34fb
+[CHG] Device FC:58:FA:A8:72:96 ServicesResolved: yes
+[SoundBox Color]# info
+Device FC:58:FA:A8:72:96 (public)
+        Name: SoundBox Color
+        Alias: SoundBox Color
+        Class: 0x00260404
+        Icon: audio-card
+        Paired: yes
+        Trusted: yes
+        Blocked: no
+        Connected: yes
+        LegacyPairing: yes
+        UUID: Serial Port               (00001101-0000-1000-8000-00805f9b34fb)
+        UUID: Headset                   (00001108-0000-1000-8000-00805f9b34fb)
+        UUID: Audio Sink                (0000110b-0000-1000-8000-00805f9b34fb)
+        UUID: A/V Remote Control Target (0000110c-0000-1000-8000-00805f9b34fb)
+        UUID: A/V Remote Control        (0000110e-0000-1000-8000-00805f9b34fb)
+        UUID: Handsfree                 (0000111e-0000-1000-8000-00805f9b34fb)
+        RSSI: -40
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -29
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -56
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -44
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -70
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -29
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -57
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -46
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -66
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -58
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -68
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -77
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -88
+[CHG] Device F8:8F:CA:22:01:42 RSSI: -87
+[CHG] Device F8:8F:CA:22:01:42 RSSI: -76
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -29
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -54
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -42
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -68
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -29
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -79
+[CHG] Device 72:BD:F5:D1:30:E0 RSSI: -43
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -88
+[SoundBox Color]# trust 78:44:05:96:3D:EE
+Device 78:44:05:96:3D:EE not available
+[NEW] Device 78:44:05:96:3D:EE JBL GO
+[CHG] Device F8:8F:CA:22:01:42 RSSI: -88
+[SoundBox Color]# trust 78:44:05:96:3D:EE
+[CHG] Device 78:44:05:96:3D:EE Trusted: yes
+Changing 78:44:05:96:3D:EE trust succeeded
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -78
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -87
+[SoundBox Color]# pair 78:44:05:96:3D:EE
+Attempting to pair with 78:44:05:96:3D:EE
+Failed to pair: org.bluez.Error.ConnectionAttemptFailed
+[SoundBox Color]# pair 78:44:05:96:3D:EE
+Attempting to pair with 78:44:05:96:3D:EE
+[CHG] Device 78:44:05:96:3D:EE Connected: yes
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 00001101-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 00001108-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 0000110b-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE UUIDs: 0000111e-0000-1000-8000-00805f9b34fb
+[CHG] Device 78:44:05:96:3D:EE ServicesResolved: yes
+[CHG] Device 78:44:05:96:3D:EE Paired: yes
+Pairing successful
+[CHG] Device 78:44:05:96:3D:EE ServicesResolved: no
+[CHG] Device 78:44:05:96:3D:EE Connected: no
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -51
+[SoundBox Color]# connect 78:44:05:96:3D:EE
+Attempting to connect to 78:44:05:96:3D:EE
+[CHG] Device 78:44:05:96:3D:EE Connected: yes
+Connection successful
+[CHG] Device 78:44:05:96:3D:EE ServicesResolved: yes
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -76
+[CHG] Device 6C:8F:43:7F:F8:1B RSSI: -71
+[CHG] Device 4E:79:5F:BA:39:63 RSSI: -91
+[JBL GO]# info 
+Device 78:44:05:96:3D:EE (public)
+        Name: JBL GO
+        Alias: JBL GO
+        Class: 0x00240404
+        Icon: audio-card
+        Paired: yes
+        Trusted: yes
+        Blocked: no
+        Connected: yes
+        LegacyPairing: no
+        UUID: Serial Port               (00001101-0000-1000-8000-00805f9b34fb)
+        UUID: Headset                   (00001108-0000-1000-8000-00805f9b34fb)
+        UUID: Audio Sink                (0000110b-0000-1000-8000-00805f9b34fb)
+        UUID: A/V Remote Control Target (0000110c-0000-1000-8000-00805f9b34fb)
+        UUID: A/V Remote Control        (0000110e-0000-1000-8000-00805f9b34fb)
+        UUID: Handsfree                 (0000111e-0000-1000-8000-00805f9b34fb)
+        RSSI: -38
+        TxPower: 0
+[CHG] Device F8:8F:CA:22:01:42 RSSI: -74
+[CHG] Device 34:27:92:25:28:E8 RSSI: -88
+[JBL GO]# devices
+Device 6C:8F:43:7F:F8:1B 6C-8F-43-7F-F8-1B
+Device 4E:79:5F:BA:39:63 4E-79-5F-BA-39-63
+Device 72:BD:F5:D1:30:E0 72-BD-F5-D1-30-E0
+Device 41:EC:BA:84:12:D6 41-EC-BA-84-12-D6
+Device F8:8F:CA:22:01:42 Chambre parent
+Device 34:27:92:25:28:E8 Freebox Player Mini v2
+Device FC:58:FA:A8:72:96 SoundBox Color
+Device 78:44:05:96:3D:EE JBL GO
