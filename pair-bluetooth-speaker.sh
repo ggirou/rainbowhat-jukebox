@@ -13,7 +13,10 @@ echo default-agent
 echo scan on
 sleep 20
 echo disconnect $MAC_ADDRESS
+echo untrust $MAC_ADDRESS
+echo remove $MAC_ADDRESS
 echo disconnect
+sleep 2
 echo connect $MAC_ADDRESS
 echo trust $MAC_ADDRESS
 sleep 2

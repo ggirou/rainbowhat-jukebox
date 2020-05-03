@@ -118,3 +118,20 @@ https://github.com/pimoroni/rainbow-hat
 
     sudo apt-get install python-dev libbluetooth-dev
     pip3 install PyBluez
+
+## Python-VLC
+
+    sudo apt-get install vlc python3-vlc
+    # Needs PulseAudio
+
+## MPlayer
+
+http://www.mplayerhq.hu/DOCS/man/fr/mplayer.1.html
+
+    sudo apt-get install mplayer
+
+    mplayer -ao alsa:device=bluealsa test.mp3
+
+## Other
+
+[Headless A2DP Audio Streaming on Raspbian Stretch](https://gist.github.com/Pindar/e259bec5c3ab862f4ff5f1fbcb11bfc1)
