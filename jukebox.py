@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import pexpect
 import os
 import signal
 import threading
@@ -366,12 +367,17 @@ class Bluetooth:
   def disconnect(self, device='', timeout=1):
     if device == '' and self.device is not None:
       device = self.device
-    self.__exec("disconnect %s" % device, timeouts=timeout)
+    output = self.__exec("disconnect %s" % device, timeouts=timeout)
     self.device = None
+    return "Successful disconnected" in output
 
   def reconnect(self):
+    device = self.info()
     self.disconnect()
-    return self.autoconnect()
+    if device is None:
+      return self.autoconnect()
+    else:
+      return self.connect(device)
     # print("Try to reconnect")
     # if self.device is None:
     #   output = os.popen("echo info | bluetoothctl").read()
@@ -383,8 +389,50 @@ class Bluetooth:
     # print(output)
 
 
+def triesWithPexpect():
+  ctl = pexpect.spawn('bluetoothctl')
+  ctl.expect('^.+# ')
+  ctl.sendline('agent on')
+  ctl.expect('^.+registered')
+  ctl.expect('^.+# ')
+  ctl.sendline('default-agent')
+  ctl.expect('^.+successful')
+  # ctl.sendline('scan on')
+  # ctl.expect('^.+# ')
+  # time.sleep(5)
+  # ctl.expect('Device ([:A-F0-9]+)')
+  # print(ctl.__dict__)
+  # # print(str(ctl.before))
+  # # print(str(ctl.after))
+  # print(str(ctl.match))
+  # time.sleep(5)
+  # print(str(ctl.before))
+  # ctl.sendline('scan off')
+  # print(str(ctl.before))
+  # output = __exec("devices")
+  ctl.sendline('devices')
+  time.sleep(2)
+  # ctl.expect('Device ([:A-F0-9]+)')
+
+  output = ctl.expect(['Device ([:A-F0-9]+)', '^[^\x1b]+# '])
+  # output = ctl.expect('^.+# ')
+  print(output)
+  # print(ctl.read())
+  print(ctl.before)
+  print(ctl.after)
+  print(ctl.match)
+  print(ctl.__dict__)
+  # return __parseDevices(output)
+
+
 def main():
   # bt = Bluetooth()
+
+  # output = bt.devices()
+  # print(output)
+
+  # mac = bt.info()
+  # print(mac)
   # mac = '78:44:05:96:3D:EE'
 
   # device = bt.unpair(mac)
@@ -395,9 +443,6 @@ def main():
 
   # device = bt.autopair()
   # print(device)
-
-  # mac = bt.info()
-  # print(mac)
 
   # devices = bt.pairedDevices()
   # print(devices)
@@ -414,13 +459,13 @@ def main():
   # device = bt.reconnect()
   # print(device)
 
-  # singleton.SingleInstance()
+  singleton.SingleInstance()
 
   bluetooth = Bluetooth()
   with Display() as display:
+    bluetooth.autoconnect()
     with Player(display, bluetooth) as player:
       Buttons(display, player, bluetooth)
-      bluetooth.autoconnect()
       signal.pause()
 
 

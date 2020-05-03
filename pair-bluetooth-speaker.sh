@@ -8,19 +8,21 @@ MAC_ADDRESS_=`echo $MAC_ADDRESS | tr ':' '_'`
 PROFIL=a2dp_sink
 
 {
-echo help
 echo agent on
 echo default-agent
 echo scan on
-echo disconnect $MAC_ADDRESS
-echo connect $MAC_ADDRESS
 sleep 20
+echo disconnect $MAC_ADDRESS
+echo disconnect
+echo connect $MAC_ADDRESS
 echo trust $MAC_ADDRESS
 sleep 2
 echo pair $MAC_ADDRESS
 sleep 2
 echo connect $MAC_ADDRESS
-sleep 10
+sleep 2
+echo scan off
+sleep 1
 } | bluetoothctl
 
 # defaults.bluealsa.service "org.bluealsa"
