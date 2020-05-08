@@ -16,12 +16,14 @@ class Bluetooth:
 
   @device.setter
   def device(self, value):
+    print("Set device: %s" % value)
     self.__device = value
-    with open(os.environ['HOME'] + "/.asoundrc", "w") as f:
-      f.write('defaults.bluealsa.interface "hci0"\n')
-      f.write(f'defaults.bluealsa.device "{value}"\n')
-      f.write('defaults.bluealsa.profile "a2dp"\n')
-      # f.write('defaults.bluealsa.delay 10000\n')
+    if value is not None:
+      with open(os.environ['HOME'] + "/.asoundrc", "w") as f:
+        f.write('defaults.bluealsa.interface "hci0"\n')
+        f.write(f'defaults.bluealsa.device "{value}"\n')
+        f.write('defaults.bluealsa.profile "a2dp"\n')
+        # f.write('defaults.bluealsa.delay 10000\n')
 
   def __exec(self, commands, timeouts=0, rawCommand=None):
     if rawCommand is None:
@@ -91,6 +93,9 @@ class Bluetooth:
     # print("scannedDevices: %s" % scannedDevices)
     # print("connectableDevices: %s" % connectableDevices)
     for device in pairedDevices:
+      self.disconnect(device=device)
+
+    for device in pairedDevices:
       result = self.connect(device)
       if result is not None:
         return result
@@ -103,12 +108,19 @@ class Bluetooth:
     # else:
     #   return None
 
-  def connect(self, device, timeout=2):
+  def connect(self, device, timeout=5):
+    print("Connecting %s..." % device)
+    if device is None:
+      print("Device can't be None")
+      return None
+
+    self.device = device
+
     output = self.__exec("connect %s" % device, timeouts=timeout)
     if 'Connection successful' in output:
-      self.device = device
       return device
     else:
+      self.device = None
       return None
 
   def disconnect(self, device='', timeout=1):
@@ -119,6 +131,7 @@ class Bluetooth:
     return "Successful disconnected" in output
 
   def reconnect(self):
+    print("Reconnecting...")
     device = self.info()
     self.disconnect()
     if device is None:

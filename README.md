@@ -23,7 +23,7 @@ Music player with Rainbow Hat
     sudo raspi-config
     # 3 Boot Options > B1 Desktop / CLI > B2 Console Autologin
 
-    echo 'pushd jukebox; ./pair-bluetooth-speaker.sh FC:58:FA:A8:72:96; ./jukebox.py > jukebox.log; popd' >> ~/.bashrc
+    echo 'pushd jukebox; ./jukebox.py 2>&1 | tee /tmp/jukebox.$(date +"%F_%T").log; popd' >> ~/.bashrc
 
 ## Run
 

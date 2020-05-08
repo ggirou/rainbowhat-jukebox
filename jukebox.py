@@ -35,8 +35,8 @@ class Player:
     self.__display.__exit__(exc_type, exc_value, traceback)
     self.process.__exit__(exc_type, exc_value, traceback)
 
-  def show(self):
-    self.__display.show(currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
+  def show(self,value=None):
+    self.__display.show(value=value,currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
 
   @property
   def currentAlbum(self):
@@ -96,8 +96,11 @@ class Player:
       error = stderr.decode('utf-8')
       print("Error %s: %s" % (returncode, error))
       if(returncode == 1):
+        self.show(value="ERR")
         print("Try to reconnect")
-        self.__bluetooth.reconnect()
+        device = self.__bluetooth.reconnect()
+        if device is not None:
+          self.show(value="OK")
 
   def pause(self):
     print("Pause")
@@ -212,7 +215,7 @@ class Buttons:
 
 
 def main():
-  singleton.SingleInstance()
+  me = singleton.SingleInstance()
 
   bluetooth = Bluetooth()
   with Display() as display:
