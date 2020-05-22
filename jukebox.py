@@ -35,8 +35,8 @@ class Player:
     self.__display.__exit__(exc_type, exc_value, traceback)
     self.process.__exit__(exc_type, exc_value, traceback)
 
-  def show(self,value=None):
-    self.__display.show(value=value,currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
+  def show(self, value=None):
+    self.__display.show(value=value, currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
 
   @property
   def currentAlbum(self):
@@ -146,11 +146,96 @@ class Player:
     self.play()
 
 
-class Buttons:
-  def __init__(self, display, player, bluetooth):
-    self.display = display
+class MenuController:
+  def __init__(self, player, display, bluetooth):
+    self.player = PlayerMenu(self, player)
+    self.option = OptionMenu(self, display, bluetooth)
+    self.goToPlayer()
+
+  def press(self, button):
+    self.current.press(button)
+
+  def hold(self, button):
+    self.current.hold(button)
+
+  def goToPlayer(self):
+    self.current = self.player
+    self.current.show()
+
+  def goToOption(self):
+    self.current = self.option
+    self.current.show()
+
+
+class PlayerMenu:
+  def __init__(self, controller, player):
+    self.controller = controller
     self.player = player
+
+  def press(self, button):
+    if(button == touch.A._index):
+      self.player.previous()
+    elif(button == touch.B._index):
+      self.player.togglePauseResume()
+    elif(button == touch.C._index):
+      self.player.next()
+
+  def hold(self, button):
+    if(button == touch.A._index):
+      self.player.previousAlbum()
+    elif(button == touch.B._index):
+      self.controller.goToOption()
+    elif(button == touch.C._index):
+      self.player.nextAlbum()
+
+  def show(self):
+    self.player.show()
+
+
+class OptionMenu:
+  def __init__(self, controller, display, bluetooth):
+    self.controller = controller
+    self.display = display
     self.bluetooth = bluetooth
+    self.commands = ["MENU", "PLAY", "PAIR", "RSET", "HALT"]
+    self.current = 0
+
+  def press(self, button):
+    if(button == touch.A._index):
+      self.current = (self.current + len(self.commands) - 1) % len(self.commands)
+      self.show()
+    elif(button == touch.B._index):
+      cmd = self.commands[self.current]
+      if cmd == "MENU" or cmd == "PLAY":
+        self.current = 0
+        self.controller.goToPlayer()
+      elif cmd == "PAIR":
+        print("Auto-Pair")
+        self.bluetooth.autopair()
+      elif cmd == "RSET":
+        print("Reboot")
+        self.display.clear()
+        Popen(["shutdown", "-r", "now"])
+        exit()
+      elif cmd == "HALT":
+        print("Shutdown")
+        self.display.clear()
+        Popen(["shutdown", "now"])
+        exit()
+    elif(button == touch.C._index):
+      self.current = (self.current + 1) % len(self.commands)
+      self.show()
+
+  def hold(self, button):
+    pass
+
+  def show(self):
+    self.display.show(value=self.commands[self.current])
+
+
+class Buttons:
+  def __init__(self, controller):
+    self.controller = controller
     self.holding = False
     touch.A.press(lambda button: self.press(button))
     touch.B.press(lambda button: self.press(button))
@@ -158,8 +243,6 @@ class Buttons:
     touch.A.release(lambda button: self.release(button))
     touch.B.release(lambda button: self.release(button))
     touch.C.release(lambda button: self.release(button))
-    self.commands = ["PLAY", "PAIR", "RSET", "HALT"]
-    self.currentCmd = 0
     self.holdTimer = threading.Timer(0, lambda: None)
 
   def __startHold(self, button):
@@ -170,48 +253,21 @@ class Buttons:
   def hold(self, button):
     # print("Hold %s" % button)
     self.holding = True
-    if(button == touch.A._index):
-      self.player.previousAlbum()
-    elif(button == touch.B._index):
-      self.currentCmd = (self.currentCmd + 1) % len(self.commands)
-      self.display.show(value=self.commands[self.currentCmd])
-    elif(button == touch.C._index):
-      self.player.nextAlbum()
+    self.controller.hold(button)
     self.__startHold(button)
 
   def press(self, button):
+    # print("A %s B %s C %s" % (touch.A.pressed, touch.B.pressed, touch.C.pressed))
     lights.rgb(int(button == 0), int(button == 1), int(button == 2))
     self.__startHold(button)
-    # print("A %s B %s C %s" % (touch.A.pressed, touch.B.pressed, touch.C.pressed))
 
   def release(self, button):
     lights.rgb(0, 0, 0)
     self.holdTimer.cancel()
     if self.holding:
       self.holding = False
-      if(button == touch.B._index):
-        cmd = self.commands[self.currentCmd]
-        if cmd == "PLAY":
-          self.player.show()
-        elif cmd == "PAIR":
-          print("Auto-Pair")
-          self.bluetooth.autopair()
-        elif cmd == "RSET":
-          print("Reboot")
-          self.display.clear()
-          Popen(["shutdown", "-r", "now"])
-          exit()
-        elif cmd == "HALT":
-          print("Shutdown")
-          self.display.clear()
-          Popen(["shutdown", "now"])
-          exit()
-    elif(button == touch.A._index):
-      self.player.previous()
-    elif(button == touch.B._index):
-      self.player.togglePauseResume()
-    elif(button == touch.C._index):
-      self.player.next()
+    else:
+      self.controller.press(button)
 
 
 def main():
@@ -221,7 +277,8 @@ def main():
   with Display() as display:
     bluetooth.autoconnect()
     with Player(display, bluetooth) as player:
-      Buttons(display, player, bluetooth)
+      controller = MenuController(player, display, bluetooth)
+      Buttons(controller)
       signal.pause()
 
 
