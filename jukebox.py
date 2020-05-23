@@ -37,7 +37,8 @@ class Player:
     self.process.__exit__(exc_type, exc_value, traceback)
 
   def show(self, value=None):
-    self.__display.show(value=value, currentAlbum=self.currentAlbum, currentTrack=self.currentTrack, playing=self.playing)
+    self.__display.show(value=value, currentAlbum=self.currentAlbum,
+                        currentTrack=self.currentTrack, playing=self.playing)
 
   @property
   def currentAlbum(self):
@@ -68,7 +69,7 @@ class Player:
     # if self.process.poll() is not None:
     self.process.send_signal(signal.SIGINT)
 
-  def play(self, file=None):
+  def play(self, file=None, show=True):
     if(file is None):
       file = self.album[self.currentTrack]
 
@@ -83,7 +84,8 @@ class Player:
     self.process = Popen(args, stdout=PIPE, stderr=PIPE)
     self.playing = True
     print("Playing %s" % file)
-    self.show()
+    if(show):
+      self.show()
 
     thread = threading.Thread(target=self.onProcessExit)
     thread.start()
@@ -92,7 +94,7 @@ class Player:
     _, stderr = self.process.communicate()
     returncode = self.process.returncode
     if(returncode == 0):
-      self.next()
+      self.next(show=False)
     elif(returncode is not None):
       error = stderr.decode('utf-8')
       print("Error %s: %s" % (returncode, error))
@@ -129,10 +131,10 @@ class Player:
     self.currentTrack -= 1
     self.play()
 
-  def next(self):
+  def next(self, show=True):
     print("Next")
     self.currentTrack += 1
-    self.play()
+    self.play(show=show)
 
   def previousAlbum(self):
     print("Previous album")
@@ -145,7 +147,6 @@ class Player:
     self.currentAlbum += 1
     self.currentTrack = 0
     self.play()
-
 
 
 def main():
