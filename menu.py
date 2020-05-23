@@ -26,6 +26,7 @@ class MenuController:
 
   def goToOption(self):
     self.current = self.option
+    self.current.goToDefaultMenu()
     self.current.show()
 
 
@@ -59,37 +60,64 @@ class OptionMenu:
     self.controller = controller
     self.display = display
     self.bluetooth = bluetooth
-    self.commands = ["MENU", "PLAY", "PAIR", "RSET", "HALT"]
+    self.goToDefaultMenu()
+    self.sleepTimer = threading.Timer(0, lambda: None)
+
+  def __shutdown(self, reboot=False):
+    print("Reboot" if reboot else "Shutdown")
+    self.display.clear()
+    Popen(["shutdown", "-r", "now"] if reboot else ["shutdown", "now"])
+    os.kill(os.getpid(), signal.SIGINT)
+
+  def goToDefaultMenu(self, current=0):
+    self.commands = ["MENU", "SLiP", "PAIR", "RSET", "HALT", "BACK"]
     self.current = 0
+
+    def execCommand(self):
+      cmd = self.commands[self.current]
+      print("Main menu exec %s" % cmd)
+      if cmd == "MENU" or cmd == "BACK":
+        self.controller.goToPlayer()
+      elif cmd == "SLiP":
+        self.goToSleepSubMenu()
+        self.show()
+      elif cmd == "PAIR":
+        self.bluetooth.autopair()
+      elif cmd == "RSET":
+        self.__shutdown(reboot=True)
+      elif cmd == "HALT":
+        self.__shutdown()
+    self.execCommand = execCommand
+
+  def goToSleepSubMenu(self, current=0):
+    sleepTimes = [10, 20, 30, 60, 120, 240]
+    self.commands = ["10mn", "20mn", "30mn", "1H", "2H", "4H", "CANC"]
+    self.current = 3
+
+    def execCommand(self):
+      cmd = self.commands[self.current]
+      print("Sleep menu exec %s" % cmd)
+      if(self.current < len(sleepTimes)):
+        sleepTime = sleepTimes[self.current]
+        print("Sleep in %smn" % sleepTime)
+        self.sleepTimer = threading.Timer(sleepTime * 60, self.__shutdown)
+        self.sleepTimer.start()
+      self.goToDefaultMenu(current=1)
+      self.show()
+    self.execCommand = execCommand
 
   def press(self, button):
     if(button == touch.A._index):
       self.current = (self.current + len(self.commands) - 1) % len(self.commands)
       self.show()
     elif(button == touch.B._index):
-      cmd = self.commands[self.current]
-      if cmd == "MENU" or cmd == "PLAY":
-        self.current = 0
-        self.controller.goToPlayer()
-      elif cmd == "PAIR":
-        print("Auto-Pair")
-        self.bluetooth.autopair()
-      elif cmd == "RSET":
-        print("Reboot")
-        self.display.clear()
-        Popen(["shutdown", "-r", "now"])
-        os.kill(os.getpid(), signal.SIGINT)
-      elif cmd == "HALT":
-        print("Shutdown")
-        self.display.clear()
-        Popen(["shutdown", "now"])
-        os.kill(os.getpid(), signal.SIGINT)
+      self.execCommand(self)
     elif(button == touch.C._index):
       self.current = (self.current + 1) % len(self.commands)
       self.show()
 
   def hold(self, button):
-    pass
+    self.controller.goToPlayer()
 
   def show(self):
     self.display.show(value=self.commands[self.current])
